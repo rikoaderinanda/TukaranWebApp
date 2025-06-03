@@ -1,15 +1,25 @@
 @{
     ViewData["Title"] = "Login";
 }
-<h2>Login</h2>
-<form method="post">
-    <input type="text" name="username" placeholder="Username" />
-    <br />
-    <input type="password" name="password" placeholder="Password" />
-    <br />
-    <button type="submit">Login</button>
+<div class="d-flex justify-content-center">
+    <h2>Login</h2>
+</div>
+<form method="post" class="mt-4 w-100" style="max-width: 400px; margin:auto;">
+    <div class="mb-3">
+        <input type="text" class="form-control" name="username" placeholder="Username" />
+    </div>
+    <div class="mb-3">
+        <input type="password" class="form-control" name="password" placeholder="Password" />
+    </div>
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger text-center" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i> @ViewBag.Error
+        </div>
+    }
+    <div class="d-grid gap-2 mb-2">
+        <button type="submit" class="btn btn-primary">Login</button>
+        <a class="btn btn-danger" href="@Url.Action("SignInGoogle", "Account")">Login dengan Google</a>
+    </div>
+
 </form>
-@if (ViewBag.Error != null)
-{
-    <p style="color:red;">@ViewBag.Error</p>
-}

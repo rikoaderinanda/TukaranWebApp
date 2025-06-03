@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TukaranWebApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a33b8d1cda75832f922c61abf07b1aa933b765b8")]
 [assembly: System.Reflection.AssemblyProductAttribute("TukaranWebApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TukaranWebApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

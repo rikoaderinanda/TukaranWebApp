@@ -16,7 +16,6 @@ namespace TukaranWebApp.Data
             _config = config;
         }
 
-        public IDbConnection CreateConnection()
-            => new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+        public IDbConnection CreateConnection()=> new SqlConnection(_config.GetConnectionString("DefaultConnection"));
     }
 }

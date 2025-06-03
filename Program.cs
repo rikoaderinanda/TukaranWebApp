@@ -1,4 +1,7 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using TukaranWebApp.Data;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,16 +9,23 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<AppDbConnection>();
 builder.Services.AddTransient<TableInitializer>();
-builder.Services.AddTransient<AccountRepository>();
+builder.Services.AddTransient<IAccountRepository, AccountRepository>();
 
 
 // Tambahkan layanan authentication dan authorization
-builder.Services.AddAuthentication("Cookies")
+var Configuration = builder.Configuration;
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
 .AddCookie("Cookies", options =>
 {
     options.LoginPath = "/Account/Login"; // Sesuaikan dengan path login kamu
     // options.AccessDeniedPath = "/Account/AccessDenied"; // Optional
+})
+.AddGoogle("Google", options =>
+{
+    options.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? "";
+    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? "";
 });
+
 builder.Services.AddAuthorization();
 
 var app = builder.Build();

@@ -17,7 +17,6 @@ D:\Repository\TukaranApp\TukaranWebApp\bin\Debug\net8.0\TukaranWebApp.pdb
 D:\Repository\TukaranApp\TukaranWebApp\bin\Debug\net8.0\Dapper.dll
 D:\Repository\TukaranApp\TukaranWebApp\bin\Debug\net8.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
 D:\Repository\TukaranApp\TukaranWebApp\bin\Debug\net8.0\Microsoft.Extensions.Logging.Abstractions.dll
-D:\Repository\TukaranApp\TukaranWebApp\bin\Debug\net8.0\Npgsql.dll
 D:\Repository\TukaranApp\TukaranWebApp\obj\Debug\net8.0\staticwebassets.build.json
 D:\Repository\TukaranApp\TukaranWebApp\obj\Debug\net8.0\staticwebassets.development.json
 D:\Repository\TukaranApp\TukaranWebApp\obj\Debug\net8.0\staticwebassets\msbuild.TukaranWebApp.Microsoft.AspNetCore.StaticWebAssets.props
@@ -77,3 +76,4 @@ D:\Repository\TukaranApp\TukaranWebApp\bin\Debug\net8.0\runtimes\win-x64\native\
 D:\Repository\TukaranApp\TukaranWebApp\bin\Debug\net8.0\runtimes\win-x86\native\Microsoft.Data.SqlClient.SNI.dll
 D:\Repository\TukaranApp\TukaranWebApp\bin\Debug\net8.0\runtimes\win\lib\net8.0\System.Diagnostics.EventLog.dll
 D:\Repository\TukaranApp\TukaranWebApp\bin\Debug\net8.0\runtimes\win\lib\net8.0\System.Security.Cryptography.Pkcs.dll
+D:\Repository\TukaranApp\TukaranWebApp\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.Google.dll
