@@ -1,25 +1,75 @@
 @{
     ViewData["Title"] = "Login";
 }
-<div class="d-flex justify-content-center">
-    <h2>Login</h2>
-</div>
-<form method="post" class="mt-4 w-100" style="max-width: 400px; margin:auto;">
-    <div class="mb-3">
-        <input type="text" class="form-control" name="username" placeholder="Username" />
-    </div>
-    <div class="mb-3">
-        <input type="password" class="form-control" name="password" placeholder="Password" />
-    </div>
-    @if (ViewBag.Error != null)
-    {
-        <div class="alert alert-danger text-center" role="alert">
-            <i class="bi bi-exclamation-triangle-fill"></i> @ViewBag.Error
-        </div>
-    }
-    <div class="d-grid gap-2 mb-2">
-        <button type="submit" class="btn btn-primary">Login</button>
-        <a class="btn btn-danger" href="@Url.Action("SignInGoogle", "Account")">Login dengan Google</a>
-    </div>
 
-</form>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow rounded-4" x-data="loginForm()" x-init="init()">
+                <div class="card-body p-4">
+                    <h2 class="text-center mb-4">Login</h2>
+
+                    <template x-if="error">
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <span x-text="error"></span>
+                            <button type="button" class="btn-close" x-on:click="error = ''" aria-label="Close"></button>
+                        </div>
+                    </template>
+
+                    <form method="post" x-on:submit.prevent="handleSubmit($el)">
+                        <div class="mb-3">
+                            <input type="text" name="username" x-model="username" class="form-control" placeholder="Email" />
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="input-group">
+                                <input :type="showPassword ? 'text' : 'password'" name="password" x-model="password"
+                                       class="form-control" placeholder="Password" />
+                                <button class="btn btn-outline-secondary" type="button" x-on:click="showPassword = !showPassword">
+                                    <i :class="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mb-2">
+                            <button type="submit" class="btn btn-primary" :disabled="loading">
+                                <span x-show="!loading">Login</span>
+                                <span x-show="loading">
+                                    <i class="spinner-border spinner-border-sm me-2"></i>Loading...
+                                </span>
+                            </button>
+                            <a class="btn btn-danger" href="@Url.Action("SignInGoogle", "Account")">
+                                <i class="bi bi-google me-1"></i> Login dengan Google
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+    document.addEventListener("alpine:init", () => {
+        Alpine.data("loginForm", () => ({
+            loading: false,
+            username: '',
+            password: '',
+            showPassword: false,
+            error: '@(ViewData["ServerError"] ?? "")',
+            init() 
+            { 
+                //console.log("Alpine initialized", this); 
+            },
+            handleSubmit(el) 
+            {
+                this.loading = true;
+                this.error = '';
+                el.submit(); // Kirim form ke server
+            }
+        }));
+    });
+</script>
+}

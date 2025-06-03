@@ -1,0 +1,43 @@
+## Visual Studio
+.vscode/
+.vs/
+*.user
+*.suo
+
+## Build results
+bin/
+obj/
+out/
+[Ll]og/
+
+## Paket NuGet lokal
+*.nupkg
+*.snupkg
+*.nuspec
+*.cache/
+*.dll
+*.exe
+
+## File konfigurasi environment dan rahasia
+*.env
+secrets.json
+appsettings.Development.json
+appsettings.*.local.json
+
+## File log dan database lokal
+*.log
+*.db
+*.sqlite
+
+## Folder publish
+publish/
+dist/
+artifacts/
+
+## File sistem
+Thumbs.db
+Desktop.ini
+
+## OS-specific
+.DS_Store
+*.swp

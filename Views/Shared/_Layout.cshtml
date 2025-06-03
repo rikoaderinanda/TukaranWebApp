@@ -1,58 +1,112 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="en" x-data="layout()" x-init="init()" class="h-100">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - TukaranWebApp</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/TukaranWebApp.styles.css" asp-append-version="true" />
+    <title>@ViewData["Title"] - TukaranApp</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+    <style>
+        body {
+            overflow-x: hidden;
+        }
+        .sidebar {
+            width: 250px;
+            transition: transform 0.3s ease-in-out;
+        }
+        .sidebar-hidden {
+            transform: translateX(-100%);
+        }
+        .sidebar-visible {
+            transform: translateX(0);
+        }
+        @@media (min-width: 768px) {
+            .sidebar {
+                transform: translateX(0) !important;
+            }
+        }
+        .rotate-180 
+        {
+            transform: rotate(180deg);
+            transition: transform 0.2s ease-in-out;
+        }
+    </style>
+
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">TukaranWebApp</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
-                @if(User.Identity.IsAuthenticated)
-                {
-                    <span class="navbar-text" style="margin-right:10px;">Welcome, @User.Identity.Name!</span>
-                    <a class="" asp-area="" asp-controller="Account" asp-action="Logout">Logout</a>
-                }
-                else
-                {
-                    <span class="navbar-text">You are not logged in.</span>
-                }
+<body class="h-100 d-flex flex-column">
+    @if(User.Identity.IsAuthenticated)
+    {  
+        <!-- Topbar -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm px-3">
+            <button class="btn btn-outline-secondary" x-on:click="toggleSidebar">
+                <i class="bi bi-list"></i>
+            </button>
+            <a class="navbar-brand ms-3 fw-bold" href="#">TukaranApp</a>
+            <div class="ms-auto d-flex align-items-center">
+                <span class="me-3">Hi, @User.Identity?.Name</span>
+                <a asp-controller="Account" asp-action="Logout" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
             </div>
         </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+    }
+
+    <div class="d-flex flex-grow-1">
+        @if(User.Identity.IsAuthenticated)
+        {    
+            <div class="bg-light sidebar shadow position-fixed h-100 z-3"
+                :style="{ width: sidebarWidth, transform: isMobile && !sidebarOpen ? 'translateX(-100%)' : 'translateX(0)' }"
+                x-on:click.outside="isMobile && (sidebarOpen = false)">
+                @await Html.PartialAsync("_Sidebar")
+            </div>
+        }
+
+        <!-- Main Content -->
+        <main class="flex-grow-1 p-4"
+            :style="{ marginLeft: !isMobile ? sidebarWidth : '0' }">
             @RenderBody()
         </main>
     </div>
+<script>
+    function layout() {
+        return {
+            sidebarOpen: true,
+            isMobile: window.innerWidth < 768,
+            collapsed: false,
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - TukaranWebApp - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    @await RenderSectionAsync("Scripts", required: false)
+            init() {
+                this.updateDevice()
+                window.addEventListener('resize', () => this.updateDevice())
+            },
+
+            updateDevice() {
+                this.isMobile = window.innerWidth < 768
+                if (this.isMobile) {
+                    this.sidebarOpen = false
+                } else {
+                    this.sidebarOpen = true
+                }
+            },
+
+            toggleSidebar() {
+                if (this.isMobile) {
+                    this.sidebarOpen = !this.sidebarOpen
+                } else {
+                    this.collapsed = !this.collapsed
+                }
+            },
+
+            get sidebarWidth() {
+                if (this.isMobile) return this.sidebarOpen ? '250px' : '0'
+                return this.collapsed ? '60px' : '250px'
+            }
+        }
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    @RenderSection("Scripts", required: false)
 </body>
 </html>

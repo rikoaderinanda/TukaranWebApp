@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Mvc;
 using TukaranWebApp.Data;
 using TukaranWebApp.Models;
+using BCrypt.Net;
 
 namespace TukaranWebApp.Controllers
 {
@@ -22,13 +23,12 @@ namespace TukaranWebApp.Controllers
             _logger = logger;
         }
 
-        // [HttpGet]
-        // public IActionResult Login() => View();
-
+    
         public IActionResult Login()
         {
             return View();
         }
+
         public IActionResult SetNewPassword()
         {
             return View();
@@ -36,13 +36,7 @@ namespace TukaranWebApp.Controllers
 
         public IActionResult SignInGoogle()
         {
-
-            // var redirectUrl = Url.Action("GoogleResponse");
-            // var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
-            // return Challenge(properties, GoogleDefaults.AuthenticationScheme);
-
             var redirectUrl = Url.Action("GoogleResponse", "Account", null, Request.Scheme);
-
             var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
             return Challenge(properties, GoogleDefaults.AuthenticationScheme);
         }
@@ -50,101 +44,87 @@ namespace TukaranWebApp.Controllers
         [HttpGet]
         public async Task<IActionResult> GoogleResponse()
         {
-
-            // Mendapatkan info user dari cookie scheme (hasil challenge)
-            var authenticateResult = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-
-            if (!authenticateResult.Succeeded)
-                return RedirectToAction("Login", "Account"); // jika gagal, redirect ke login biasa
-
-            // Ambil claim user dari Google
-            var claims = authenticateResult.Principal.Identities.FirstOrDefault()?.Claims.ToList();
-
-            // Contoh ambil email dan nama user
-            var email = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
-            var name = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
-            // TODO: Implementasikan logic login / register user di database sesuai email dan nama
-            if (email != null)
+            try
             {
-                var account = await _accountRepository.GetByUsernameAsync(email);
-                if (account == null)
+                var authenticateResult = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+                if (!authenticateResult.Succeeded)
+                    return RedirectToAction("Login", "Account"); // jika gagal, redirect ke login biasa
+
+                // Ambil claim user dari Google
+                var claims = authenticateResult.Principal.Identities.FirstOrDefault()?.Claims.ToList();
+
+                // ambil email dan nama user
+                var account = new Account();
+                account.Username = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+                var claims_ = new List<Claim> { new Claim(ClaimTypes.Name, account.Username) };
+                var identity = new ClaimsIdentity(claims_, CookieAuthenticationDefaults.AuthenticationScheme);
+                var principal = new ClaimsPrincipal(identity);
+                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+                var acc = await _accountRepository.CheckLoginGoogle(account);
+                if (acc.PasswordHash == "Google Login")
                 {
-                    // Jika user belum terdaftar, bisa buat akun baru
-                    account = new Account { Username = email, PasswordHash = "GoogleLogin" }; // Simulasi password hash
-                    await _accountRepository.CreateAsync(account);
-                    var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                    var principal = new ClaimsPrincipal(identity);
-                    // Simpan informasi user ke cookie
-                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
                     return RedirectToAction("SetNewPassword", "Account");
                 }
-                else if (account.PasswordHash == "GoogleLogin")
-                {
-                    var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                    var principal = new ClaimsPrincipal(identity);
-                    // Simpan informasi user ke cookie
-                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
-                    // Jika user sudah terdaftar tapi belum set password, redirect ke SetNewPassword
-                    return RedirectToAction("SetNewPassword", "Account");
-                }
-                else
-                {
-                    var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                    var principal = new ClaimsPrincipal(identity);
-                    // Simpan informasi user ke cookie
-                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
-                    return RedirectToAction("Index", "Home");
-                }
-
-
+                
+                return RedirectToAction("Index", "Home");
             }
-
-
-            // Jika email tidak ditemukan, redirect ke halaman login dengan pesan error
-            ViewBag.Error = "Email tidak terdaftar.";
-            return View("Login");
+            catch (Exception  ex)
+            {
+                // Log error
+                 ViewBag.Error = "An unexpected error occurred. Please contact admin.";
+                 ViewData["ServerError"] = "An unexpected error occurred. Please contact admin.";
+                return RedirectToAction("Login");
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> Login(string username, string password)
-        {
-            var account = await _accountRepository.GetAccountLoginAsync(new Account
+        { 
+            try
             {
-                Username = username,
-                PasswordHash = password // Simulasi password hash, seharusnya di-hash
-            });
-            // Cek apakah akun ditemukan
-            if (account == null)
-            {
-                ViewBag.Error = "Invalid credentials";
-                return View();
+                if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+                {
+                    ViewBag.Error = "Username and password are required";
+                    ViewData["ServerError"] = "Username and password are required";
+                    return View();
+                }
+                var res = await _accountRepository.GetByUsernameAsync(username);
+                // Cek apakah akun ditemukan
+                if (res == null)
+                {
+                    ViewBag.Error = "Account not found";
+                    ViewData["ServerError"] = "Account not found";
+                    return View();
+                }
+
+                bool isPasswordValid = BCrypt.Net.BCrypt.Verify(password, res.PasswordHash);
+                
+                if (!isPasswordValid)
+                {
+                    ViewBag.Error = "Invalid credentials";
+                    ViewData["ServerError"] = "Invalid credentials";
+                    return View();
+                }
+
+                var claims = new List<Claim> { new Claim(ClaimTypes.Name, res.Username) };
+                var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var principal = new ClaimsPrincipal(identity);
+                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+                return RedirectToAction("Index", "Home");
             }
-
-            var claims = new List<Claim> { new Claim(ClaimTypes.Name, username) };
-            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var principal = new ClaimsPrincipal(identity);
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
-            return RedirectToAction("Index", "Home");
-
-
+            catch (Exception  ex)
+            {
+                // Log error
+                ViewBag.Error = "An unexpected error occurred. Please contact admin.";
+                ViewData["ServerError"] = "An unexpected error occurred. Please contact admin.";
+                return View("Login");
+            }
         }
 
         [HttpPost]
-        public async Task<IActionResult> SaveNewPassword(string password, string passwordConfirm)
+        public async Task<IActionResult> SetNewPassword(string password,string passwordConfirm)
         {
-            if (string.IsNullOrEmpty(password) || string.IsNullOrEmpty(passwordConfirm))
-            {
-                ViewBag.Error = "Password tidak boleh kosong";
-                return View("SetNewPassword");
-            }
-
-            if (password != passwordConfirm)
-            {
-                ViewBag.Error = "Password tidak cocok";
-                return View("SetNewPassword");
-            }
-
-            // Simulasi update password, seharusnya di-hash
             var username = User.Identity?.Name;
             if (username == null)
             {
@@ -154,14 +134,32 @@ namespace TukaranWebApp.Controllers
             var account = await _accountRepository.GetByUsernameAsync(username);
             if (account == null)
             {
-                return RedirectToAction("Login");
+                ViewBag.Error = "Account not found";
+                ViewData["ServerError"] = "Account not found";
+                return View();
             }
-
-            account.PasswordHash = password; // Simulasi update password hash
+            if (string.IsNullOrEmpty(password) || string.IsNullOrEmpty(passwordConfirm))
+            {
+                ViewBag.Error = "Password and confirmation are required";
+                return View();
+            }
+            if (password != passwordConfirm)
+            {
+                ViewBag.Error = "Passwords do not match";
+                return View();
+            }
+            if (password.Length < 6)
+            {
+                ViewBag.Error = "Password must be at least 6 characters long";
+                return View();
+            }
+            
+            // Hash the password before saving
+            account.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
             await _accountRepository.UpdateAsync(account);
-
             return RedirectToAction("Index", "Home");
         }
+
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync("Cookies");
